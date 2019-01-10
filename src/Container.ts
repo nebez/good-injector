@@ -10,11 +10,7 @@ export function SupportsInjection<T extends { new(...args: any[]): {} }>(constru
     // tslint:disable-next-line:no-empty => decorator has no content but still does its magic
 }
 
-// tslint:disable-next-line:no-empty-interface => marker
-interface IRegistration {
-}
-
-interface ITypedRegistration<T> extends IRegistration {
+interface ITypedRegistration<T> {
     resolve(argumentBuilder: (type: IConcreteConstructor<T>) => any[]): T;
 }
 
@@ -46,7 +42,7 @@ class SingletonRegistration<T> implements ITypedRegistration<T> {
 }
 
 class InstanceRegistration<T> implements ITypedRegistration<T> {
-    constructor(private _instance: T) {        
+    constructor(private _instance: T) {
     }
 
     public resolve(argumentBuilder: (type: IConcreteConstructor<T>) => any[]): T {
@@ -55,7 +51,7 @@ class InstanceRegistration<T> implements ITypedRegistration<T> {
 }
 
 class FactoryRegistration<T> implements ITypedRegistration<T> {
-    constructor(private _factory: FactoryFunction<T>) {        
+    constructor(private _factory: FactoryFunction<T>) {
     }
 
     public resolve(argumentBuilder: (type: IConcreteConstructor<T>) => any[]): T {
@@ -66,7 +62,7 @@ class FactoryRegistration<T> implements ITypedRegistration<T> {
 class SingletonFactoryRegistration<T> implements ITypedRegistration<T> {
     private _instance: T | undefined;
 
-    constructor(private _factory: FactoryFunction<T>) {        
+    constructor(private _factory: FactoryFunction<T>) {
     }
 
     public resolve(argumentBuilder: (type: IConcreteConstructor<T>) => any[]): T {
@@ -81,7 +77,7 @@ class SingletonFactoryRegistration<T> implements ITypedRegistration<T> {
 
 export class Container {
     private _parameterTypes: Map<Function, any[]> = new Map<Function, any[]>();
-    private _providers: Map<Function, IRegistration> = new Map<Function, IRegistration>();
+    private _providers: Map<Function, ITypedRegistration<any>> = new Map<Function, ITypedRegistration<any>>();
 
     public registerTransient<T>(self: IConcreteConstructor<T>): void;
     public registerTransient<From, To extends From>(when: Constructor<From>, then: IConcreteConstructor<To>): void;
@@ -121,8 +117,8 @@ export class Container {
         if (then == undefined) {
             throw new Error(`Cannot register null or undefined as instance. Did you intend to call unregister?`);
         }
-        
-        // this basically checks for "function" !== "object" e.g. if someone uses trivial types for registration 
+
+        // this basically checks for "function" !== "object" e.g. if someone uses trivial types for registration
         // and passes in a factory function as "then" instead of a real instance (see explanation in unit tests).
         if (typeof(then) !== typeof(when.prototype)) {
             throw new Error(`You need to register an instance with the same type as the prototype of the source.`);
@@ -173,7 +169,7 @@ export class Container {
         return registration.resolve((toResolve) => this.createArgs(toResolve));
     }
 
-    private register<From, To extends From>(when: Constructor<From>, then: IConcreteConstructor<To>, registration: IRegistration): void {
+    private register<From, To extends From>(when: Constructor<From>, then: IConcreteConstructor<To>, registration: ITypedRegistration<To>): void {
         const paramTypes: any[] = Reflect.getMetadata("design:paramtypes", then);
         this._parameterTypes.set(then, paramTypes);
         this._providers.set(when, registration);

@@ -76,7 +76,7 @@ export class ScopeTests {
     @Test("resolving registered instance should get the original instance")
     public scopeTest6() {
         let container = new Container();
-        
+
         let instance = new Child();
         container.registerInstance(Child, instance);
 
@@ -88,7 +88,7 @@ export class ScopeTests {
     @Test("resolving registered instance should get the same instance every time")
     public scopeTest7() {
         let container = new Container();
-        
+
         let instance = new Child();
         container.registerInstance(Child, instance);
 
@@ -157,7 +157,7 @@ export class ScopeTests {
         // => we can account for some of these cases by checking the type at runtime and throw
         // for more details, see: https://github.com/Microsoft/TypeScript/wiki/FAQ#why-is-astring-assignable-to-anumber-for-interface-at--
         let container = new Container();
-        
+
         let factory = () => new Child();
 
         // note: wrongly used "registerInstance" instead of "registerFactory" here (-> i.e. typo)
@@ -167,25 +167,25 @@ export class ScopeTests {
     @Test("registering a derived type as instance should resolve correctly")
     public scopeTest12() {
         // this test is to make sure the runtime check tested by scopeTest11 does not break inheritance
-        let container = new Container();        
+        let container = new Container();
         container.registerInstance(Child, new DerivedChild());
 
         let resolvedChild = container.resolve(Child);
-        
-        Expect(resolvedChild instanceof DerivedChild).toBe(true);   
+
+        Expect(resolvedChild instanceof DerivedChild).toBe(true);
     }
 
     @Test("registering a type derived from a derviced type as instance should resolve correctly")
     public scopeTest13() {
         // this test is to make sure the runtime check tested by scopeTest11 does not break inheritance
-        let container = new Container();        
+        let container = new Container();
         container.registerInstance(Child, new DerivedDerivedChild());
 
         let resolvedChild = container.resolve(Child);
-        
-        Expect(resolvedChild instanceof DerivedDerivedChild).toBe(true);   
+
+        Expect(resolvedChild instanceof DerivedDerivedChild).toBe(true);
     }
-    
+
     @Test("resolving registered as singleton factory should use the factory")
     public scopeTest14() {
         let container = new Container();

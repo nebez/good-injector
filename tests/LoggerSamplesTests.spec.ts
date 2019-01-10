@@ -14,7 +14,7 @@ export class LoggerSamplesTests {
       container.registerTransient(Logger, ConsoleLogger);
 
       let logger = container.resolve(Logger);
-      Expect(logger instanceof ConsoleLogger).toBe(true);      
+      Expect(logger instanceof ConsoleLogger).toBe(true);
     }
 
     @Test("registered console logger can be used as console logger when resolved")
@@ -35,7 +35,7 @@ export class LoggerSamplesTests {
       container.registerTransient(Logger, ConsoleLoggerWithDependency);
       container.registerTransient(Tool);
 
-      let logger = container.resolve(Logger);      
+      let logger = container.resolve(Logger);
       let testMethodResult = (<ConsoleLoggerWithDependency>logger).testMethod(); // uses injected "Tool" internally
       Expect(testMethodResult).toBe("42blubb");
     }
