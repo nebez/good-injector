@@ -21,7 +21,6 @@
   "scripts": {
     "clean:dist": "rimraf ./dist/**/*.*",
     "compile:src": "tsc -p ./tsconfig.json",
-    "compile:tests": "tsc -p ./tests/tsconfig.json",
     "lint": "tslint --format stylish ./src/**/*.ts",
     "build": "yarn clean:dist && yarn compile:src && yarn lint && yarn test",
     "test": "ts-node --project ./tests/tsconfig.json ./tests/Runner.ts",
