@@ -1,6 +1,7 @@
 # good-injector-async
 
-[![Build Status](https://travis-ci.org/nebez/good-injector.svg?branch=master)](https://travis-ci.org/nebez/good-injector)
+[![Build Status](https://travis-ci.org/nebez/good-injector.svg?branch=master)](https://travis-ci.org/nebez/good-injector) [![Known Vulnerabilities](https://snyk.io/test/github/nebez/good-injector/badge.svg)](https://snyk.io/test/github/nebez/good-injector) [![Downloads](https://img.shields.io/npm/dt/good-injector-async.svg)](https://www.npmjs.com/package/good-injector-async)
+
 
 A fork of [good-injector](https://github.com/MisterGoodcat/good-injector), an opinionated dependency injector container written in TypeScript for TypeScript developers, that provides only async resolutions.
 
