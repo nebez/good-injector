@@ -1,5 +1,8 @@
-# good-injector
-An opinionated dependency injector container written in TypeScript for TypeScript developers.
+# good-injector-async
+
+[![Build Status](https://travis-ci.org/nebez/good-injector.svg?branch=master)](https://travis-ci.org/nebez/good-injector)
+
+A fork of [good-injector](https://github.com/MisterGoodcat/good-injector), an opinionated dependency injector container written in TypeScript for TypeScript developers, that provides only async resolutions.
 
 ## Features
 
@@ -7,6 +10,7 @@ An opinionated dependency injector container written in TypeScript for TypeScrip
 * Type-safe with a good amount of compiler support (no magic strings, no convention based approach).
 * Strict and explicit, meaning no silent fails or unexpected outcome for misconfigurations, no intransparent black magic.
 * Supported scope kinds for type registrations: transient, singleton, instance, and factory functions (singleton/custom).
+* Support for async factory resolutions, when creating a dependency on demand might require I/O
 
 ## Usage
 
@@ -15,7 +19,7 @@ Install:
 ```cmd
 yarn add good-injector
 
-or 
+or
 
 npm install good-injector
 ```
@@ -25,7 +29,7 @@ Create a container and register type mappings with it. Use the container later t
 ```ts
 let container = new Container();
 
-// map abstract types to concrete implementations. 
+// map abstract types to concrete implementations.
 // compiler complains if ConsoleLogger does not extend Logger
 container.registerTransient(Logger, ConsoleLogger);
 
@@ -41,21 +45,21 @@ export class MyCustomType {
 }
 
 // resolve it. MyCustomType constructor receives a fresh instance of ConsoleLogger
-let myCustomType = container.resolve(MyCustomType);
+let myCustomType = await container.resolve(MyCustomType);
 ```
 
 Use singleton registration if required:
 
 ```ts
-@Test("resolving transient parent with singleton child gets same child instance every time")
-public scopeTest4() {      
-    let container = new Container();        
+@AsyncTest("resolving transient parent with singleton child gets same child instance every time")
+public async scopeTest4() {
+    let container = new Container();
     container.registerTransient(Parent);
     container.registerSingleton(Child);
-    
-    let parent1 = container.resolve(Parent);
-    let parent2 = container.resolve(Parent);
-            
+
+    let parent1 = await container.resolve(Parent);
+    let parent2 = await container.resolve(Parent);
+
     Expect(parent1).not.toEqual(parent2);
     Expect(parent1.child).toBeDefined();
     Expect(parent1.child).toEqual(parent2.child);
@@ -65,14 +69,14 @@ public scopeTest4() {
 Register already available instances (e.g. an object you received from somewhere else) as instance:
 
 ```ts
-@Test("resolving registered instance should get the original instance")
-public scopeTest6() {
+@AsyncTest("resolving registered instance should get the original instance")
+public async scopeTest6() {
     let container = new Container();
-    
+
     let instance = new Child();
     container.registerInstance(Child, instance);
 
-    let child1 = container.resolve(Child);
+    let child1 = await container.resolve(Child);
 
     Expect(child1).toEqual(instance);
 }
@@ -81,8 +85,8 @@ public scopeTest6() {
 Register resolution strategies with factory functions. This allows you to apply any complex logic for resolving instances that are beyond the scope of the container:
 
 ```ts
-@Test("resolving registered by factory should return the factory result")
-public scopeTest10() {
+@AsyncTest("resolving registered by factory should return the factory result")
+public async scopeTest10() {
     let container = new Container();
     let child1 = new Child();
     let child2 = new Child();
@@ -94,9 +98,9 @@ public scopeTest10() {
     };
 
     container.registerFactory(Child, factory);
-    let returnedChild1 = container.resolve(Child);
-    let returnedChild2 = container.resolve(Child);
-    let returnedChild3 = container.resolve(Child);
+    let returnedChild1 = await container.resolve(Child);
+    let returnedChild2 = await container.resolve(Child);
+    let returnedChild3 = await container.resolve(Child);
 
     Expect(returnedChild1).not.toEqual(returnedChild2);
     Expect(returnedChild1).toEqual(returnedChild3);
@@ -108,33 +112,53 @@ public scopeTest10() {
 You can also use singleton factories. This allows complex creation of singletons without the need to handle the lifetime logic yourself.
 
 ```ts
-@Test("resolving registered as singleton factory should return the same result every time")
-public scopeTest16() {
+@AsyncTest("resolving registered as singleton factory should return the same result every time")
+public async scopeTest16() {
     let container = new Container();
 
     // explicitly create new instance, but should only be called once later
     let factory = () => new Child();
 
     container.registerSingletonFactory(Child, factory);
-    let child1 = container.resolve(Child);
-    let child2 = container.resolve(Child);
-    let child3 = container.resolve(Child);
+    let child1 = await container.resolve(Child);
+    let child2 = await container.resolve(Child);
+    let child3 = await container.resolve(Child);
 
     Expect(child1).toEqual(child2);
     Expect(child1).toEqual(child3);
 }
 ```
 
+Similar to above, use async singleton (or transient) factories for wiring up a dependency that might require I/O.
+
+```ts
+import { Connection, createConnection } from 'typeorm';
+let container = new Container();
+
+// The connection will only be created when the repository that needs it is resolved!
+let connectionFactory = async () => await createConnection({ ... });
+container.registerSingletonFactory(Connection, connectionFactory);
+
+@SupportsInjection
+export class MyRepository {
+    public constructor(public connection: Connection) {
+    }
+}
+
+const repo = await container.resolve(MyRepository);
+await repo.connection.query('SELECT NOW()');
+```
+
 You can unregister registrations. Use case, for example: passing around data across a sub-system of your application, and removing it once that sub-system is left, or a workflow has been finished etc.
 
 ```ts
-@Test("when registered as instance and unregistered, it should throw on resolve")
-public scopeTest3() {
+@AsyncTest("when registered as instance and unregistered, it should throw on resolve")
+public async scopeTest3() {
     let container = new Container();
     container.registerInstance(Child, new Child());
     container.unregister(Child);
-            
-    Expect(() => container.resolve(Child)).toThrow();
+
+    Expect(() => container.resolve(Child)).toThrowAsync();
 }
 ```
 
