@@ -3,9 +3,10 @@ import "reflect-metadata";
 // tslint:disable:ban-types => We really want to use the most generic "Function" type in here
 
 export type Constructor<T> = Function & { prototype: T }; // this describes an abstract class constructor
-export interface IConcreteConstructor<T> { new(...args: any[]): T; }
+export type IConcreteConstructor<T> = new(...args: any[]) => T;
 export type FactoryFunction<T> = () => T | Promise<T>;
 
+// tslint:disable-next-line
 export function SupportsInjection<T extends { new(...args: any[]): {} }>(constructor: T) {
     // tslint:disable-next-line:no-empty => decorator has no content but still does its magic
 }
@@ -173,7 +174,7 @@ export class Container {
             throw new Error(`No registration found for type '${type.name}'`);
         }
 
-        return await registration.resolve(async (toResolve) => await this.createArgs(toResolve));
+        return await registration.resolve(async toResolve => await this.createArgs(toResolve));
     }
 
     private register<From, To extends From>(when: Constructor<From>, then: IConcreteConstructor<To>, registration: ITypedRegistration<To>): void {
