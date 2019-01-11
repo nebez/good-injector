@@ -8,13 +8,13 @@
     "TypeScript",
     "Async"
   ],
-  "homepage": "https://github.com/nebez/good-injector",
+  "homepage": "https://github.com/nebez/good-injector-async",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nebez/good-injector.git"
+    "url": "https://github.com/nebez/good-injector-async.git"
   },
   "bugs": {
-    "url": "https://github.com/nebez/good-injector/issues"
+    "url": "https://github.com/nebez/good-injector-async/issues"
   },
   "main": "dist/Index.js",
   "types": "dist/Index.d.ts",
