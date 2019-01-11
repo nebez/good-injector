@@ -1,6 +1,6 @@
 {
   "name": "good-injector-async",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "A fork of good-injector, an opinionated dependency injector container written in TypeScript for TypeScript developers, that provides only async resolutions.",
   "keywords": [
     "Dependency Injection",
