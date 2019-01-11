@@ -13,9 +13,9 @@ export class ScopeTests {
         container.registerTransient(Child);
 
         let child1 = await container.resolve(Child);
-        let child2 = container.resolve(Child);
+        let child2 = await container.resolve(Child);
 
-        Expect(child1).not.toEqual(child2);
+        Expect(child1 === child2).toBe(false);
     }
 
     @AsyncTest("when registered as singleton should return the same instance every time")
@@ -26,7 +26,7 @@ export class ScopeTests {
         let child1 = await container.resolve(Child);
         let child2 = await container.resolve(Child);
 
-        Expect(child1).toEqual(child2);
+        Expect(child1 === child2).toBe(true);
     }
 
     @AsyncTest("resolving transient parent with transient child gets different child instances every time")
@@ -38,9 +38,9 @@ export class ScopeTests {
         let parent1 = await container.resolve(Parent);
         let parent2 = await container.resolve(Parent);
 
-        Expect(parent1).not.toEqual(parent2);
+        Expect(parent1 === parent2).toBe(false);
         Expect(parent1.child).toBeDefined();
-        Expect(parent1.child).not.toEqual(parent2.child);
+        Expect(parent1.child === parent2.child).toBe(false);
     }
 
     @AsyncTest("resolving transient parent with singleton child gets same child instance every time")
@@ -52,9 +52,9 @@ export class ScopeTests {
         let parent1 = await container.resolve(Parent);
         let parent2 = await container.resolve(Parent);
 
-        Expect(parent1).not.toEqual(parent2);
+        Expect(parent1 === parent2).toBe(false);
         Expect(parent1.child).toBeDefined();
-        Expect(parent1.child).toEqual(parent2.child);
+        Expect(parent1.child === parent2.child).toBe(true);
     }
 
     @AsyncTest("resolving singleton parent with transient child gets same child instance every time")
@@ -68,9 +68,9 @@ export class ScopeTests {
         let parent1 = await container.resolve(Parent);
         let parent2 = await container.resolve(Parent);
 
-        Expect(parent1).toEqual(parent2);
+        Expect(parent1 === parent2).toBe(true);
         Expect(parent1.child).toBeDefined();
-        Expect(parent1.child).toEqual(parent2.child);
+        Expect(parent1.child === parent2.child).toBe(true);
     }
 
     @AsyncTest("resolving registered instance should get the original instance")
@@ -82,7 +82,7 @@ export class ScopeTests {
 
         let child1 = await container.resolve(Child);
 
-        Expect(child1).toEqual(instance);
+        Expect(child1 === instance).toBe(true);
     }
 
     @AsyncTest("resolving registered instance should get the same instance every time")
@@ -95,7 +95,7 @@ export class ScopeTests {
         let child1 = await container.resolve(Child);
         let child2 = await container.resolve(Child);
 
-        Expect(child1).toEqual(child2);
+        Expect(child1 === child2).toBe(true);
     }
 
     @AsyncTest("resolving registered by factory should use the factory")
@@ -124,7 +124,7 @@ export class ScopeTests {
         container.registerFactory(Child, factory);
         let child1 = await container.resolve(Child);
 
-        Expect(child1).toEqual(child);
+        Expect(child1 === child).toBe(true);
     }
 
     @AsyncTest("resolving registered by factory should return the factory result 2")
@@ -144,10 +144,10 @@ export class ScopeTests {
         let returnedChild2 = await container.resolve(Child);
         let returnedChild3 = await container.resolve(Child);
 
-        Expect(returnedChild1).not.toEqual(returnedChild2);
-        Expect(returnedChild1).toEqual(returnedChild3);
-        Expect(returnedChild1).toEqual(child1);
-        Expect(returnedChild2).toEqual(child2);
+        Expect(returnedChild1 === returnedChild2).toBe(false);
+        Expect(returnedChild1 === returnedChild3).toBe(true);
+        Expect(returnedChild1 === child1).toBe(true);
+        Expect(returnedChild2 === child2).toBe(true);
     }
 
     @AsyncTest("registering a type-compatible factory as instance should result in an error")
@@ -212,7 +212,7 @@ export class ScopeTests {
         container.registerSingletonFactory(Child, factory);
         let child1 = await container.resolve(Child);
 
-        Expect(child1).toEqual(child);
+        Expect(child1 === child).toBe(true);
     }
 
     @AsyncTest("resolving registered as singleton factory should return the same result every time")
@@ -227,8 +227,8 @@ export class ScopeTests {
         let child2 = await container.resolve(Child);
         let child3 = await container.resolve(Child);
 
-        Expect(child1).toEqual(child2);
-        Expect(child1).toEqual(child3);
+        Expect(child1 === child2).toBe(true);
+        Expect(child1 === child3).toBe(true);
     }
 
     @AsyncTest("resolving an async registration should return the underlying resolved value")
@@ -298,12 +298,12 @@ export class ScopeTests {
             container.resolve(Parent),
         ]);
 
-        Expect(parent1 == parent2).toBe(false);
-        Expect(parent2 == parent3).toBe(false);
-        Expect(parent1 == parent3).toBe(false);
+        Expect(parent1 === parent2).toBe(false);
+        Expect(parent2 === parent3).toBe(false);
+        Expect(parent1 === parent3).toBe(false);
 
-        Expect(parent1.child == parent2.child).toBe(true);
-        Expect(parent2.child == parent3.child).toBe(true);
-        Expect(parent1.child == parent3.child).toBe(true);
+        Expect(parent1.child === parent2.child).toBe(true);
+        Expect(parent2.child === parent3.child).toBe(true);
+        Expect(parent1.child === parent3.child).toBe(true);
     }
 }
