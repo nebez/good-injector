@@ -4,39 +4,42 @@ import "reflect-metadata";
 
 export type Constructor<T> = Function & { prototype: T }; // this describes an abstract class constructor
 export interface IConcreteConstructor<T> { new(...args: any[]): T; }
-export type FactoryFunction<T> = () => T;
+export type FactoryFunction<T> = () => T | Promise<T>;
 
 export function SupportsInjection<T extends { new(...args: any[]): {} }>(constructor: T) {
     // tslint:disable-next-line:no-empty => decorator has no content but still does its magic
 }
 
 interface ITypedRegistration<T> {
-    resolve(argumentBuilder: (type: IConcreteConstructor<T>) => any[]): T;
+    resolve(argumentBuilder: (type: IConcreteConstructor<T>) => Promise<any[]>): Promise<T>;
 }
 
 class TransientRegistration<T> implements ITypedRegistration<T> {
     constructor(private _type: IConcreteConstructor<T>) {
     }
 
-    public resolve(argumentBuilder: (type: IConcreteConstructor<T>) => any[]): T {
-        const args = argumentBuilder(this._type);
+    public async resolve(argumentBuilder: (type: IConcreteConstructor<T>) => Promise<any[]>): Promise<T> {
+        const args = await argumentBuilder(this._type);
         return new this._type(...args);
     }
 }
 
 class SingletonRegistration<T> implements ITypedRegistration<T> {
-    private _instance: T | undefined;
+    private _instance: Promise<T> | undefined;
 
     constructor(private _type: IConcreteConstructor<T>) {
     }
 
-    public resolve(argumentBuilder: (type: IConcreteConstructor<T>) => any[]): T {
+    public async resolve(argumentBuilder: (type: IConcreteConstructor<T>) => Promise<any[]>): Promise<T> {
         if (this._instance != undefined) {
             return this._instance;
         }
 
-        const args = argumentBuilder(this._type);
-        this._instance = new this._type(...args);
+        this._instance = new Promise(async resolve => {
+            const args = await argumentBuilder(this._type);
+            resolve(new this._type(...args));
+        });
+
         return this._instance;
     }
 }
@@ -45,7 +48,7 @@ class InstanceRegistration<T> implements ITypedRegistration<T> {
     constructor(private _instance: T) {
     }
 
-    public resolve(argumentBuilder: (type: IConcreteConstructor<T>) => any[]): T {
+    public async resolve(argumentBuilder: (type: IConcreteConstructor<T>) => Promise<any[]>): Promise<T> {
         return this._instance;
     }
 }
@@ -54,23 +57,26 @@ class FactoryRegistration<T> implements ITypedRegistration<T> {
     constructor(private _factory: FactoryFunction<T>) {
     }
 
-    public resolve(argumentBuilder: (type: IConcreteConstructor<T>) => any[]): T {
+    public async resolve(argumentBuilder: (type: IConcreteConstructor<T>) => Promise<any[]>): Promise<T> {
         return this._factory();
     }
 }
 
 class SingletonFactoryRegistration<T> implements ITypedRegistration<T> {
-    private _instance: T | undefined;
+    private _instance: Promise<T> | undefined;
 
     constructor(private _factory: FactoryFunction<T>) {
     }
 
-    public resolve(argumentBuilder: (type: IConcreteConstructor<T>) => any[]): T {
+    public async resolve(argumentBuilder: (type: IConcreteConstructor<T>) => Promise<any[]>): Promise<T> {
         if (this._instance != undefined) {
             return this._instance;
         }
 
-        this._instance = this._factory();
+        this._instance = new Promise(async resolve => {
+            resolve(this._factory());
+        });
+
         return this._instance;
     }
 }
@@ -156,17 +162,18 @@ export class Container {
         this._providers.delete(type);
     }
 
-    public resolve<T>(type: Constructor<T>): T {
+    public async resolve<T>(type: Constructor<T>): Promise<T> {
         if (type == undefined) {
             throw new Error(`Cannot resolve null or undefined type`);
         }
 
         const registration = this._providers.get(type) as ITypedRegistration<T>;
+
         if (registration == undefined) {
             throw new Error(`No registration found for type '${type.name}'`);
         }
 
-        return registration.resolve((toResolve) => this.createArgs(toResolve));
+        return await registration.resolve(async (toResolve) => await this.createArgs(toResolve));
     }
 
     private register<From, To extends From>(when: Constructor<From>, then: IConcreteConstructor<To>, registration: ITypedRegistration<To>): void {
@@ -175,12 +182,12 @@ export class Container {
         this._providers.set(when, registration);
     }
 
-    private createArgs<T>(type: IConcreteConstructor<T>): any[] {
+    private async createArgs<T>(type: IConcreteConstructor<T>): Promise<any[]> {
         const paramTypes = this._parameterTypes.get(type);
         if (paramTypes == undefined) {
             return [];
         }
 
-        return paramTypes.map((x) => this.resolve(x));
+        return await Promise.all(paramTypes.map(async x => await this.resolve(x)));
     }
 }
