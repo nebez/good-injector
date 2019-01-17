@@ -1,19 +1,23 @@
 import "reflect-metadata";
 
-// tslint:disable:ban-types => We really want to use the most generic "Function" type in here
-
 export type Constructor<T> = Function & { prototype: T }; // this describes an abstract class constructor
 export type IConcreteConstructor<T> = new(...args: any[]) => T;
 export type FactoryFunction<T> = () => T | Promise<T>;
 
-// tslint:disable-next-line
-export function SupportsInjection<T extends { new(...args: any[]): {} }>(constructor: T) {
-    // tslint:disable-next-line:no-empty => decorator has no content but still does its magic
+// tslint:disable
+export function SupportsInjection(target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor): any;
+export function SupportsInjection<T extends { new(...args: any[]): {} }>(constructor: T): any;
+export function SupportsInjection() {
+    // The decorator has no content but still does its magic. We provide
+    // overloads to support both constructor and method decoration.
 }
+// tslint:enable
 
 interface ITypedRegistration<T> {
     resolve(argumentBuilder: (type: IConcreteConstructor<T>) => Promise<any[]>): Promise<T>;
 }
+
+type FunctionPropertyNames<T> = { [K in keyof T]: T[K] extends Function ? K : never }[keyof T];
 
 class TransientRegistration<T> implements ITypedRegistration<T> {
     constructor(private _type: IConcreteConstructor<T>) {
@@ -175,6 +179,25 @@ export class Container {
         }
 
         return await registration.resolve(async toResolve => await this.createArgs(toResolve));
+    }
+
+    public async invoke<T extends any, U extends FunctionPropertyNames<T>>(instance: T, methodName: U): Promise<ReturnType<T[U]>> {
+        if (instance == undefined) {
+            throw new Error(`Cannot invoke on a null or undefined type`);
+        }
+
+        if (!(methodName in instance)) {
+            throw new Error(`${methodName} does not exist on ${instance.toString()}`);
+        }
+
+        if (typeof(instance[methodName]) !== "function") {
+            throw new Error(`${methodName} of ${instance.toString()} is not callable`);
+        }
+
+        const argTypes = Reflect.getMetadata("design:paramtypes", instance, <string> methodName);
+        const args = await Promise.all(argTypes.map(async (x: any) => await this.resolve(x)));
+
+        return (<Function> instance[methodName]).apply(instance, args);
     }
 
     private register<From, To extends From>(when: Constructor<From>, then: IConcreteConstructor<To>, registration: ITypedRegistration<To>): void {

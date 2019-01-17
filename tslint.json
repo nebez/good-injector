@@ -3,6 +3,7 @@
     "extends": "tslint:recommended",
     "jsRules": {},
     "rules": {
+        "ban-types": [true, ["Object"], ["Boolean"], ["Number"], ["String"], ["Symbol"]],
         "arrow-parens": [true, "ban-single-arg-parens"],
         "max-classes-per-file": [false],
         "max-line-length": [false],

@@ -12,6 +12,7 @@ A fork of [good-injector](https://github.com/MisterGoodcat/good-injector), an op
 * Strict and explicit, meaning no silent fails or unexpected outcome for misconfigurations, no intransparent black magic.
 * Supported scope kinds for type registrations: transient, singleton, instance, and factory functions (singleton/custom).
 * Support for async factory resolutions, when creating a dependency on demand might require I/O
+* Support for instance method invocation and dependency resolution
 
 ## Usage
 
@@ -149,6 +150,29 @@ export class MyRepository {
 const repo = await container.resolve(MyRepository);
 await repo.connection.query('SELECT NOW()');
 ```
+
+Instance method invocation and resolution.
+
+```ts
+import { Connection, createConnection } from 'typeorm';
+let container = new Container();
+
+// The connection will only be created when the repository that needs it is resolved!
+let connectionFactory = async () => await createConnection({ ... });
+container.registerSingletonFactory(Connection, connectionFactory);
+
+export class MyRepository {
+    @SupportsInjection
+    public async getNow(connection: Connection) {
+        return await connection.query('SELECT NOW()');
+    }
+}
+
+const repo = new MyRepository();
+
+const now = await container.invoke(repo, 'getNow');
+```
+
 
 You can unregister registrations. Use case, for example: passing around data across a sub-system of your application, and removing it once that sub-system is left, or a workflow has been finished etc.
 
