@@ -19,11 +19,11 @@ A fork of [good-injector](https://github.com/MisterGoodcat/good-injector), an op
 Install:
 
 ```cmd
-yarn add good-injector
+yarn add good-injector-async
 
 or
 
-npm install good-injector
+npm install good-injector-async
 ```
 
 Create a container and register type mappings with it. Use the container later to resolve mapped types, including all of their dependency chain. Make sure target types are decorated with the included `SupportsInjection` decorator.
